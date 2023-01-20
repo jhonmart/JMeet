@@ -1,10 +1,14 @@
 export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
+  ssr: true,
+  server: {
+    host: "0.0.0.0"
+  },
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'jmeet',
+    title: 'JMeet',
     htmlAttrs: {
       lang: 'en'
     },
@@ -21,10 +25,12 @@ export default {
 
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [
+    "@/assets/css/bulma.scss"
   ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    { src: '@/plugins/peer', mode: "client" },
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -44,5 +50,16 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+    extractCSS: true,
+    publicPath: 'public'
+  },
+
+  generate: {
+    dir: "docs",
+    fallback: "404.html"
+  },
+
+  router: {
+    base: "/JMeet"
   }
 }
