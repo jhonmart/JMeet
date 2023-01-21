@@ -7,6 +7,9 @@ export default ({ store }) => {
   peer.on("open", function (uid) {
     store.commit("setMyUID", uid);
   });
+  peer.on("close", function () {
+    store.commit("setMyUID", "");
+  });
   peer.on("call", function (call) {
     store.commit("addCall", call);
     call.on("stream", function (remoteStream) {
@@ -14,10 +17,12 @@ export default ({ store }) => {
     });
   });
   peer.on("connection", function (conn) {
-    store.commit("addChat", conn);
-    sharedMedia.users[conn.peer] = conn;
+    store.commit("addConnection", conn);
     conn.on("data", function (data) {
       store.commit("setMsg", data);
     });
+  });
+  peer.on("disconnected", function (uid) {
+    store.commit("removeConnection", uid);
   });
 };
