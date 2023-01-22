@@ -35,6 +35,7 @@
     </b-button>
     <b-tooltip
       type="is-dark-blue"
+      ref="actionsGruper"
       :triggers="['click']"
       :auto-close="['outside', 'escape']"
     >
@@ -55,7 +56,7 @@
         >
           <b-icon icon="account-multiple" />
         </b-button>
-        <b-button type="is-dark-google" class="is-ball-medium" rounded>
+        <b-button type="is-dark-google" class="is-ball-medium" rounded @click="callUser">
           <b-icon icon="hand" />
         </b-button>
       </template>
@@ -78,7 +79,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["getAudio", "getVideo"]),
+    ...mapGetters(["getAudio", "getVideo", "getUID"]),
     audioState: {
       get() {
         return this.getAudio;
@@ -98,8 +99,10 @@ export default {
   },
   methods: {
     ...mapMutations(["setAudio", "setVideo", "showFail"]),
-    ...mapActions(["camStreamAction", "screenStreamAction"]),
-    stopCapture() {},
+    ...mapActions(["camStreamAction", "screenStreamAction", "stopStreamAction", "sharedScreenAction"]),
+    stopCapture() {
+      this.stopStreamAction();
+    },
     async sharedCam() {
       try {
         const result = await this.camStreamAction();
@@ -113,7 +116,21 @@ export default {
       this.screenStreamAction();
     },
     showOrHiddenChat() {},
-    generateRoomLink() {},
+    generateRoomLink() {
+      const link = `${location.origin}/JMeet/reuniao/${this.getUID}`;
+      window.navigator.clipboard.writeText(link);
+      this.$buefy.toast.open({ message: "Link copiado!", type: "is-green" });
+      this.$refs.actionsGruper.close();
+    },
+    callUser() {
+      try {
+        this.sharedScreenAction(this.$route.hash.split("=")[1]);
+        this.$buefy.toast.open({ message: "Conectado", type: "is-green" });
+        this.$refs.actionsGruper.close();
+      } catch (error) {
+        this.$buefy.toast.open({ message: "Falha na conexão", type: "is-danger" });
+      }
+    }
   },
 };
 </script>

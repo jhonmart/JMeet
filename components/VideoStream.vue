@@ -7,9 +7,7 @@ export default {
   name: "VideoStream",
   props: {
     stream: {
-      type: [Object, Boolean, undefined],
-      required: false,
-      default: null,
+      required: true
     },
     width: {
       type: String,
@@ -21,7 +19,7 @@ export default {
     }
   },
   mounted() {
-    if (this.stream) this.$refs.video.srcObject = this.stream;
+    if (this.stream?.id) this.$refs.video.srcObject = this.stream;
   }
 };
 </script>

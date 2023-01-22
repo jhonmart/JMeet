@@ -12,14 +12,16 @@ const state = {
   audio: false,
   microphone: false,
   video: false as boolean | IVideoConstraints,
-  screnn: false,
+  screnn: {
+    frameRate: { ideal: 24, max: 30 },
+    facingMode: "user"
+  } as IVideoConstraints,
   peerInstance: {} as Peer,
   calls: [] as MediaConnection[],
   conn: {} as { [key: string]: DataConnection },
-  users: {} as { [key: string]: DataConnection },
   chats: [] as DataConnection[],
   streams: [] as MediaStream[],
-  myStream: null as MediaStream | null,
+  myStream: {} as MediaStream,
   actualMessage: null as any,
 };
 
@@ -35,7 +37,7 @@ const mutations = {
   setVideo(state: State, config: boolean | IVideoConstraints) {
     state.video = config;
   },
-  setScreen(state: State, status: boolean) {
+  setScreen(state: State, status: IVideoConstraints) {
     state.screnn = status;
   },
   setMyUID(state: State, uid: string) {
@@ -43,9 +45,6 @@ const mutations = {
   },
   setPeerInst(state: State, inst: Peer) {
     state.peerInstance = inst;
-  },
-  addUser(state: State, user: DataConnection) {
-    state.users[user.peer] = user;
   },
   addChat(state: State, chat: DataConnection) {
     state.chats.push(chat);
@@ -83,8 +82,26 @@ const mutations = {
     });
   },
 };
+declare global {
+  interface HTMLCanvasElement {
+    captureStream(frameRate?: number): MediaStream;
+  }
+  interface MediaDevices {
+    getDisplayMedia(constraints?: MediaStreamConstraints): Promise<MediaStream>;
+  }
+}
 
 const actions = {
+  fakeMediaStream: (_: ActionContext<State, any>) => {
+    const staticImage = new Image(400, 400);
+    staticImage.src = require("@/assets/backload.jpeg");
+    var canvas = document.createElement("canvas");
+    canvas.width = 400;
+    canvas.height = 400;
+    var ctx = canvas.getContext("2d");
+    ctx?.drawImage(staticImage, 0, 0);
+    return canvas.captureStream();
+  },
   createNewConnectionAction: async (
     { commit, state }: ActionContext<State, any>,
     uid: string
@@ -93,14 +110,25 @@ const actions = {
     commit("addConnection", newConn);
     return newConn;
   },
+  createNewCallAction: async (
+    { commit, state, dispatch }: ActionContext<State, any>,
+    uid: string
+  ) => {
+    const fakeStream = await dispatch("fakeMediaStream");
+    const newConn = state.peerInstance.call(uid, fakeStream);
+    commit("setMyStream", fakeStream);
+    commit("addCall", newConn);
+    return newConn;
+  },
   screenStreamAction: async (
     { commit, state }: ActionContext<State, any>
   ) => {
     try {
-      // @ts-ignore
-      const { getDisplayMedia } = navigator.mediaDevices;
-      const captureScreenStream: MediaStream = await getDisplayMedia({
-        video: state.video,
+      if (!navigator.mediaDevices) {
+        return commit("showFail", "Houve um erro ao acessar o plugin!");
+      }
+      const captureScreenStream: MediaStream = await navigator.mediaDevices.getDisplayMedia({
+        video: state.screnn,
         audio: state.audio,
       });
       commit("setMyStream", captureScreenStream);
@@ -120,7 +148,7 @@ const actions = {
   ) => {
     try {
       if (state.myStream) {
-        const captureScreenStream: MediaStream = state.myStream;
+        const captureScreenStream: MediaStream | Boolean = state.myStream;
         const newCall = state.peerInstance.call(uid, captureScreenStream);
         commit("addCall", newCall);
         newCall.on("stream", function (remoteStream) {
@@ -141,6 +169,7 @@ const actions = {
     { commit, state }: ActionContext<State, any>
   ) => {
     try {
+      // const getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
       const { getUserMedia } = navigator.mediaDevices;
       const captureCamStream: MediaStream = await getUserMedia({
         video: state.video,
@@ -241,9 +270,9 @@ const actions = {
   stopStreamAction: async ({ commit, state }: ActionContext<State, any>) => {
     try {
       state.myStream?.getTracks()?.forEach((track) => {
-        debugger;
         track.enabled = false;
         track.stop();
+        commit("setMyStream", {});
       });
     } catch (error) {
       commit("showFail", "Houver uma falha!");
@@ -253,11 +282,13 @@ const actions = {
 };
 
 const getters = {
+  getUID: (state: State) => state.myUID,
   getVideo: (state: State) => state.video,
   getAudio: (state: State) => state.audio,
   getActualMsg: (state: State) => state.actualMessage,
   getMyStream: (state: State) => state.myStream,
   getStreams: (state: State) => state.streams,
+  getCalls: (state: State) => state.calls,
 };
 
 export default {
