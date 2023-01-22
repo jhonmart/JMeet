@@ -93,12 +93,12 @@ const actions = {
     commit("addConnection", newConn);
     return newConn;
   },
-  sharedScreenAction: async (
-    { commit, state }: ActionContext<State, any>,
-    uid: string
+  screenStreamAction: async (
+    { commit, state }: ActionContext<State, any>
   ) => {
-    const { getDisplayMedia } = navigator.mediaDevices;
     try {
+      // @ts-ignore
+      const { getDisplayMedia } = navigator.mediaDevices;
       const captureScreenStream: MediaStream = await getDisplayMedia({
         video: state.video,
         audio: state.audio,
@@ -106,24 +106,42 @@ const actions = {
       commit("setMyStream", captureScreenStream);
       if (state.calls.length) {
         state.calls.forEach((channel) => channel.answer(captureScreenStream));
-      } else {
+      }
+      return true;
+    } catch (error) {
+      commit("showFail", "Houve um erro ao tentar iniciar a captura de tela!");
+      console.error(error);
+      return false;
+    }
+  },
+  sharedScreenAction: async (
+    { commit, state }: ActionContext<State, any>,
+    uid: string
+  ) => {
+    try {
+      if (state.myStream) {
+        const captureScreenStream: MediaStream = state.myStream;
         const newCall = state.peerInstance.call(uid, captureScreenStream);
         commit("addCall", newCall);
         newCall.on("stream", function (remoteStream) {
           commit("addStream", remoteStream);
         });
+        return true;
+      } else {
+        commit("showFail", "Não existe captura de tela!");
+        return false;
       }
     } catch (error) {
-      commit("showFail", "Houver uma falha!");
-      return error;
+      commit("showFail", "Houve um erro ao tentar iniciar o compartilhamento de tela!");
+      console.error(error);
+      return false;
     }
   },
-  sharedCamAction: async (
-    { commit, state }: ActionContext<State, any>,
-    uid: string
+  camStreamAction: async (
+    { commit, state }: ActionContext<State, any>
   ) => {
-    const { getUserMedia } = navigator.mediaDevices;
     try {
+      const { getUserMedia } = navigator.mediaDevices;
       const captureCamStream: MediaStream = await getUserMedia({
         video: state.video,
         audio: state.audio,
@@ -131,16 +149,34 @@ const actions = {
       commit("setMyStream", captureCamStream);
       if (state.calls.length) {
         state.calls.forEach((channel) => channel.answer(captureCamStream));
-      } else {
+      }
+      return true;
+    } catch (error) {
+      commit("showFail", "Houve um erro ao tentar iniciar a captura de video!");
+      return false;
+    }
+  },
+  sharedCamAction: async (
+    { commit, state }: ActionContext<State, any>,
+    uid: string
+  ) => {
+    try {
+      if (state.myStream) {
+        const captureCamStream: MediaStream = state.myStream;
         const newCall = state.peerInstance.call(uid, captureCamStream);
         commit("addCall", newCall);
         newCall.on("stream", function (remoteStream) {
           commit("addStream", remoteStream);
         });
+        return true;
+      } else {
+        commit("showFail", "Não existe captura de video!");
+        return false;
       }
     } catch (error) {
-      commit("showFail", "Houver uma falha!");
-      return error;
+      commit("showFail", "Houve um erro ao tentar iniciar o compartilhamento de video!");
+      console.error(error);
+      return false;
     }
   },
   sendFileAction: async (
@@ -198,6 +234,7 @@ const actions = {
       }
     } catch (error) {
       commit("showFail", "Houver uma falha!");
+      console.error(error);
       return error;
     }
   },
@@ -219,6 +256,8 @@ const getters = {
   getVideo: (state: State) => state.video,
   getAudio: (state: State) => state.audio,
   getActualMsg: (state: State) => state.actualMessage,
+  getMyStream: (state: State) => state.myStream,
+  getStreams: (state: State) => state.streams,
 };
 
 export default {

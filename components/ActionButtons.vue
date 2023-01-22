@@ -12,18 +12,18 @@
     <b-button
       class="is-ball-medium active"
       rounded
-      :type="video ? 'is-dark-google' : 'is-blood'"
+      :type="videoState ? 'is-dark-google' : 'is-blood'"
       @click="sharedCam"
     >
-      <b-icon :icon="video ? 'video-outline' : 'video-off-outline'" />
+      <b-icon :icon="videoState ? 'video-outline' : 'video-off-outline'" />
     </b-button>
     <b-button
       class="is-ball-medium active"
-      :type="microphone ? 'is-dark-google' : 'is-blood'"
+      :type="audioState ? 'is-dark-google' : 'is-blood'"
       rounded
-      @click="setMic"
+      @click="audioState = !audioState"
     >
-      <b-icon :icon="microphone ? 'microphone' : 'microphone-off'" />
+      <b-icon :icon="audioState ? 'microphone' : 'microphone-off'" />
     </b-button>
     <b-button
       type="is-dark-google"
@@ -67,6 +67,8 @@
 </template>
 
 <script>
+import { mapActions, mapGetters, mapMutations } from 'vuex';
+
 export default {
   name: "ActionButton",
   data() {
@@ -75,15 +77,41 @@ export default {
       microphone: false,
     };
   },
+  computed: {
+    ...mapGetters(["getAudio", "getVideo"]),
+    audioState: {
+      get() {
+        return this.getAudio;
+      },
+      set(newValue) {
+        this.setAudio(newValue);
+      }
+    },
+    videoState: {
+      get() {
+        return this.getVideo;
+      },
+      set(newValue) {
+        this.setVideo(newValue);
+      }
+    }
+  },
   methods: {
+    ...mapMutations(["setAudio", "setVideo", "showFail"]),
+    ...mapActions(["camStreamAction", "screenStreamAction"]),
     stopCapture() {},
-    sharedCam() {
-      this.video = !this.video;
+    async sharedCam() {
+      try {
+        const result = await this.camStreamAction();
+        if (result)
+          this.videoState = !this.videoState;
+      } catch (error) {
+        console.error(error);
+      }
     },
-    setMic() {
-      this.microphone = !this.microphone;
+    sharedScreen() {
+      this.screenStreamAction();
     },
-    sharedScreen() {},
     showOrHiddenChat() {},
     generateRoomLink() {},
   },

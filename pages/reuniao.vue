@@ -1,10 +1,16 @@
 <template>
   <section class="pt-2">
     <div class="stream-main">
-      <VideoStream :stream="myStream" width="100%" height="100%" />
+      <VideoStream :stream="getMyStream" width="100%" height="100%" />
     </div>
     <div class="stream-user">
-      <VideoStream :stream="myStream" width="100%" height="100%" />
+      <VideoStream
+        v-for="(stream, sIndex) in getStreams"
+        :stream="stream"
+        :key="`stream_${sIndex}`"
+        width="100%"
+        height="100%"
+      />
     </div>
     <ActionButtons class="action-buttons" />
   </section>
@@ -13,14 +19,13 @@
 <script>
 import VideoStream from "@/components/VideoStream.vue";
 import ActionButtons from "@/components/ActionButtons.vue";
+import { mapGetters } from "vuex";
 
 export default {
   components: { VideoStream, ActionButtons },
   name: "MeetPage",
   computed: {
-    myStream() {
-      return {};
-    },
+    ...mapGetters(["getMyStream", "getStreams"]),
   },
 };
 </script>

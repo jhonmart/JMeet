@@ -1,5 +1,5 @@
 <template>
-  <video autoplay="" :srcObject="stream" :style="{width, height}" />
+  <video autoplay="" ref="video" :style="{width, height}" />
 </template>
 
 <script>
@@ -7,8 +7,9 @@ export default {
   name: "VideoStream",
   props: {
     stream: {
-      type: Object,
-      required: true,
+      type: [Object, Boolean, undefined],
+      required: false,
+      default: null,
     },
     width: {
       type: String,
@@ -18,6 +19,9 @@ export default {
       type: String,
       default: "30vh"
     }
+  },
+  mounted() {
+    if (this.stream) this.$refs.video.srcObject = this.stream;
   }
 };
 </script>
