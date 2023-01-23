@@ -10,7 +10,13 @@
       />
     </div>
     <ActionButtons class="action-buttons" />
-    <b-button type="is-green" @click="connectRoom" class="action-connect">Conectar</b-button>
+    <b-button
+      :disabled="!stateConnection"
+      type="is-green"
+      @click="connectRoom"
+      class="action-connect"
+      >Conectar</b-button
+    >
   </section>
 </template>
 
@@ -24,23 +30,35 @@ export default {
   name: "RoomPage",
   data() {
     return {
-      waitConnection
-    }
+      waitConnection,
+      stateConnection: false,
+    };
   },
   computed: {
-    ...mapGetters(["getCalls", "getMyStream", "getStreams"]),
+    ...mapGetters(["getCalls", "getMyStream", "getStreams", "getPeer"]),
     roomID() {
       return this.$route.params.room;
-    }
+    },
+  },
+  watch: {
+    getPeer: {
+      handler({ _open }) {
+        if (_open) this.createNewConnectionAction(this.roomID);
+        this.stateConnection = _open;
+      },
+      deep: true,
+      immediate: true
+    },
   },
   methods: {
-    ...mapMutations(["addStream"]),
-    ...mapActions(["createNewCallAction"]),
+    ...mapMutations(["addStream", "showSuccess"]),
+    ...mapActions(["createNewCallAction", "createNewConnectionAction"]),
     connectRoom() {
-      debugger
       this.createNewCallAction(this.roomID);
-    }
-  }
+      this.showSuccess("Conectado a sala");
+      this.$router.replace("/reuniao")
+    },
+  },
 };
 </script>
 
@@ -48,7 +66,7 @@ export default {
 section {
   display: grid;
   grid-template-columns: 20px repeat(3, 1fr) 300px 20px;
-  grid-template-rows: 20px repeat(3, .25fr) 20px 100px;
+  grid-template-rows: 20px repeat(3, 0.25fr) 20px 100px;
   @media screen and (max-width: 769px) {
     grid-template-columns: 20px repeat(4, 1fr) 20px;
     grid-template-rows: 20px 50vh 25vh 100px;

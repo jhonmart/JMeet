@@ -2,6 +2,8 @@ import { ActionContext } from "vuex/types";
 import {
   ISendFileUID,
   ISendTextUID,
+  IUserStream,
+  IUserStreamList,
   IVideoConstraints,
 } from "@/store/types/P2P";
 import Peer, { DataConnection, MediaConnection } from "peerjs";
@@ -18,9 +20,9 @@ const state = {
   } as IVideoConstraints,
   peerInstance: {} as Peer,
   calls: [] as MediaConnection[],
-  conn: {} as { [key: string]: DataConnection },
+  conn: [] as DataConnection[],
   chats: [] as DataConnection[],
-  streams: [] as MediaStream[],
+  streams: {} as IUserStreamList,
   myStream: {} as MediaStream,
   actualMessage: null as any,
 };
@@ -52,14 +54,15 @@ const mutations = {
   addCall(state: State, call: MediaConnection) {
     state.calls.push(call);
   },
-  addStream(state: State, stream: MediaStream) {
-    state.streams.push(stream);
+  addStream(state: State, message: IUserStream) {
+    state.streams[message.uid] = message.stream;
   },
   addConnection(state: State, conn: DataConnection) {
-    state.conn[conn.peer] = conn;
+    state.conn.push(conn);
   },
   removeConnection(state: State, uid: string) {
-    delete state.conn[uid];
+    const index = state.conn.findIndex(user => user.peer !== uid);
+    state.conn.splice(index, 1);
   },
   setMsg(state: State, msg: any) {
     state.actualMessage = msg;
@@ -142,6 +145,20 @@ const actions = {
       return false;
     }
   },
+  sharedMyStream: async (
+    { commit, state }: ActionContext<State, any>
+  ) => {
+    try {
+      if (state.calls.length) {
+        state.calls.forEach((channel) => channel.answer(state.myStream));
+      }
+      return true;
+    } catch (error) {
+      commit("showFail", "Houve um erro ao tentar transimitir o stream!");
+      console.error(error);
+      return false;
+    }
+  },
   sharedScreenAction: async (
     { commit, state }: ActionContext<State, any>,
     uid: string
@@ -172,7 +189,7 @@ const actions = {
       // const getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
       const { getUserMedia } = navigator.mediaDevices;
       const captureCamStream: MediaStream = await getUserMedia({
-        video: state.video,
+        video: state.video || state.screnn,
         audio: state.audio,
       });
       commit("setMyStream", captureCamStream);
@@ -237,7 +254,7 @@ const actions = {
               state.conn[uidActual].send(fileObj);
           } else {
             dispatch("createNewConnectionAction", uid).then((conn) =>
-              conn.send(fileObj)
+              conn.send(fileObj) //ƒ (data, chunked)
             );
           }
         }
@@ -287,8 +304,9 @@ const getters = {
   getAudio: (state: State) => state.audio,
   getActualMsg: (state: State) => state.actualMessage,
   getMyStream: (state: State) => state.myStream,
-  getStreams: (state: State) => state.streams,
+  getStreams: (state: State) => Object.values(state.streams),
   getCalls: (state: State) => state.calls,
+  getPeer: (state: State) => state.peerInstance
 };
 
 export default {

@@ -56,7 +56,7 @@
         >
           <b-icon icon="account-multiple" />
         </b-button>
-        <b-button type="is-dark-google" class="is-ball-medium" rounded @click="callUser">
+        <b-button type="is-dark-google" class="is-ball-medium" rounded>
           <b-icon icon="hand" />
         </b-button>
       </template>
@@ -121,15 +121,6 @@ export default {
       window.navigator.clipboard.writeText(link);
       this.$buefy.toast.open({ message: "Link copiado!", type: "is-green" });
       this.$refs.actionsGruper.close();
-    },
-    callUser() {
-      try {
-        this.sharedScreenAction(this.$route.hash.split("=")[1]);
-        this.$buefy.toast.open({ message: "Conectado", type: "is-green" });
-        this.$refs.actionsGruper.close();
-      } catch (error) {
-        this.$buefy.toast.open({ message: "Falha na conexão", type: "is-danger" });
-      }
     }
   },
 };

@@ -14,3 +14,12 @@ export interface ISendTextUID {
   text: string;
   uid: string;
 }
+
+export interface IUserStream {
+  uid: string;
+  stream: MediaStream;
+}
+
+export interface IUserStreamList {
+  [key: string]: MediaStream
+}

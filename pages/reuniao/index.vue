@@ -57,11 +57,12 @@ export default {
   watch: {
     getCalls: {
       handler(newValue) {
-        newValue.forEach(call => {
-          call.on("stream", function (remoteStream) {
-            this.addStream(remoteStream);
-          });
-        });
+        // newValue.forEach(call => {
+        //   call.on("stream", function (remoteStream) {
+        //     this.addStream(remoteStream);
+        //   });
+        // });
+        newValue;
       },
       deep: true
     }
@@ -77,7 +78,7 @@ export default {
 section {
   display: grid;
   grid-template-columns: 20px repeat(3, 1fr) 300px 20px;
-  grid-template-rows: 20px repeat(3, .25fr) 20px 100px;
+  grid-template-rows: 20px repeat(3, .3fr) 20px 100px;
   @media screen and (max-width: 769px) {
     grid-template-columns: 20px repeat(4, 1fr) 20px;
     grid-template-rows: 20px 50vh 25vh 100px;
