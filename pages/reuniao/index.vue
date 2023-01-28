@@ -1,5 +1,5 @@
 <template>
-  <section class="pt-2">
+  <section class="room-section pt-2">
     <div class="stream-main">
       <video
         autoplay
@@ -32,6 +32,16 @@
         height="100%"
       /> -->
     </div>
+    <b-sidebar
+      type="is-noturno"
+      fullheight
+      overlay
+      right
+      v-model="chatState"
+      @close="chatState = false"
+    >
+      <Chat />
+    </b-sidebar>
     <ActionButtons class="action-buttons" />
   </section>
 </template>
@@ -41,9 +51,10 @@ import VideoStream from "@/components/VideoStream.vue";
 import ActionButtons from "@/components/ActionButtons.vue";
 import { mapGetters, mapMutations } from "vuex";
 import waitConnection from "@/assets/waitConnection.webp";
+import Chat from "@/components/Chat.vue";
 
 export default {
-  components: { VideoStream, ActionButtons },
+  components: { VideoStream, ActionButtons, Chat },
   name: "MeetPage",
   data() {
     return {
@@ -52,7 +63,15 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["getCalls", "getMyStream", "getStreams"]),
+    ...mapGetters(["getCalls", "getChatState", "getMyStream", "getStreams"]),
+    chatState: {
+      get() {
+        return this.getChatState;
+      },
+      set(newValue) {
+        this.setChatState(newValue);
+      }
+    }
   },
   watch: {
     getCalls: {
@@ -68,14 +87,14 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(["addStream"])
+    ...mapMutations(["addStream", "setChatState"])
   }
 };
 </script>
 
 <style lang="scss" scoped>
 @import "@/assets/css/variables.scss";
-section {
+.room-section {
   display: grid;
   grid-template-columns: 20px repeat(3, 1fr) 300px 20px;
   grid-template-rows: 20px repeat(3, .3fr) 20px 100px;

@@ -23,8 +23,13 @@ export default ({ store }) => {
     store.commit("showSuccess", "Um usuário conectou");
     store.commit("addConnection", conn);
     conn.on("data", function (data) {
-      store.commit("showSuccess", "Mensagem recebida");
       store.commit("setMsg", data);
+    });
+    conn.on('open', function(){
+      store.commit("showSuccess", "Um usuário conectou");
+    });
+    conn.on('close', function(){
+      store.commit("showSuccess", "Um usuário desconectou");
     });
   });
   peer.on("disconnected", function (uid) {

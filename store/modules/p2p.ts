@@ -25,6 +25,7 @@ const state = {
   streams: {} as IUserStreamList,
   myStream: {} as MediaStream,
   actualMessage: null as any,
+  chatState: false
 };
 
 type State = typeof state;
@@ -57,8 +58,15 @@ const mutations = {
   addStream(state: State, message: IUserStream) {
     state.streams[message.uid] = message.stream;
   },
+  setChatState(state: State, status: boolean) {
+    state.chatState = status;
+  },
   addConnection(state: State, conn: DataConnection) {
-    state.conn.push(conn);
+    if (!conn.peer) return;
+    let indexConn = state.conn.findIndex(connection => connection.peer === conn.peer);
+    if (indexConn < 0)
+      state.conn.push(conn);
+    else state.conn[indexConn] = conn;
   },
   removeConnection(state: State, uid: string) {
     const index = state.conn.findIndex(user => user.peer !== uid);
@@ -111,6 +119,15 @@ const actions = {
   ) => {
     const newConn = state.peerInstance.connect(uid);
     commit("addConnection", newConn);
+    newConn.on("data", function (data) {
+      commit("setMsg", data);
+    });
+    newConn.on('open', function(){
+      commit("showSuccess", "Um usuário conectou");
+    });
+    newConn.on('close', function(){
+      commit("showSuccess", "Um usuário desconectou");
+    });
     return newConn;
   },
   createNewCallAction: async (
@@ -306,7 +323,8 @@ const getters = {
   getMyStream: (state: State) => state.myStream,
   getStreams: (state: State) => Object.values(state.streams),
   getCalls: (state: State) => state.calls,
-  getPeer: (state: State) => state.peerInstance
+  getPeer: (state: State) => state.peerInstance,
+  getChatState: (state: State) => state.chatState
 };
 
 export default {

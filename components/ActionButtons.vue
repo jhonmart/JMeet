@@ -98,7 +98,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(["setAudio", "setVideo", "showFail"]),
+    ...mapMutations(["setAudio", "setVideo", "showFail", "setChatState"]),
     ...mapActions(["camStreamAction", "screenStreamAction", "stopStreamAction", "sharedScreenAction"]),
     stopCapture() {
       this.stopStreamAction();
@@ -115,12 +115,18 @@ export default {
     sharedScreen() {
       this.screenStreamAction();
     },
-    showOrHiddenChat() {},
+    showOrHiddenChat() {
+      this.setChatState(true);
+    },
     generateRoomLink() {
-      const link = `${location.origin}/JMeet/reuniao/${this.getUID}`;
-      window.navigator.clipboard.writeText(link);
-      this.$buefy.toast.open({ message: "Link copiado!", type: "is-green" });
-      this.$refs.actionsGruper.close();
+      try {
+        const link = `${location.origin}/JMeet/reuniao/${this.getUID}`;
+        window.navigator.clipboard.writeText(link);
+        this.$buefy.toast.open({ message: "Link copiado!", type: "is-green" });
+        this.$refs.actionsGruper.close();
+      } catch (error) {
+        this.$buefy.toast.open({ message: "Falha ao copiar!", type: "is-warning" });
+      }
     }
   },
 };

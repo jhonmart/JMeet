@@ -12,7 +12,7 @@ export interface ISendFileUID {
 
 export interface ISendTextUID {
   text: string;
-  uid: string;
+  uid?: string;
 }
 
 export interface IUserStream {
