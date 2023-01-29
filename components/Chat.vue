@@ -1,13 +1,12 @@
 <template>
   <section>
-    <header class="is-flex is-justify-content-flex-end">
-      <b-button rounded type="is-danger" size="is-small" class="is-small" @click="hiddenChat">
-        <b-icon icon="close" />
+    <header class="is-flex">
+      <b-button rounded type="is-ghost" size="is-small" class="is-small" title="Fechar o chat" @click="hiddenChat">
+        <b-icon icon="close" type="is-danger" />
       </b-button>
     </header>
     <aside
       ref="chatOutput"
-      v-on:scroll.passive="handleScroll"
     >
       <div
         v-for="({ me, body, date }, index) in history"
@@ -68,8 +67,9 @@ export default {
         }),
       });
     },
-    history() {
-      this.$refs.chatOutput.scroll(0, this.$refs.chatOutput.scrollWidth);
+    async history() {
+      await this.$nextTick();
+      this.$refs.chatOutput.scroll(0, this.$refs.chatOutput.scrollHeight);
     }
   },
   mounted() {
@@ -97,10 +97,6 @@ export default {
     },
     hiddenChat() {
       this.setChatState(false);
-    },
-    async handleScroll(ev) {
-      await this.$nextTick();
-      this.$refs.chatOutput.scroll(0, this.$refs.chatOutput.scrollWidth);
     }
   },
 };

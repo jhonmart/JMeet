@@ -38,6 +38,7 @@
       overlay
       right
       v-model="chatState"
+      class="is-30w"
       @close="chatState = false"
     >
       <Chat />

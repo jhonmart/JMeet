@@ -13,10 +13,10 @@ export default ({ store }) => {
     store.commit("setMyUID", "");
   });
   peer.on("call", function (call) {
-    store.commit("showSuccess", "Recebendo uma chamada");
     store.commit("addCall", call);
+    store.commit("showSuccess", "Recebendo uma chamada");
     call.on("stream", function (remoteStream) {
-      store.commit("addStream", { uid: call.peer, stream: remoteStream });
+      store.commit("addStream", remoteStream);
     });
   });
   peer.on("connection", function (conn) {

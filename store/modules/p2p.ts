@@ -22,7 +22,7 @@ const state = {
   calls: [] as MediaConnection[],
   conn: [] as DataConnection[],
   chats: [] as DataConnection[],
-  streams: {} as IUserStreamList,
+  streams: [] as MediaConnection[],
   myStream: {} as MediaStream,
   actualMessage: null as any,
   chatState: false
@@ -39,6 +39,19 @@ const mutations = {
   },
   setVideo(state: State, config: boolean | IVideoConstraints) {
     state.video = config;
+    if (!config) {
+      try {
+        state.myStream?.getTracks()?.forEach((track) => {
+          if (track.kind === "video") {
+            track.enabled = false;
+            track.stop();
+            state.myStream = Object();
+          }
+        });
+      } catch (error) {
+        return error;
+      }
+    }
   },
   setScreen(state: State, status: IVideoConstraints) {
     state.screnn = status;
@@ -55,8 +68,11 @@ const mutations = {
   addCall(state: State, call: MediaConnection) {
     state.calls.push(call);
   },
-  addStream(state: State, message: IUserStream) {
-    state.streams[message.uid] = message.stream;
+  addStream(state: State, stream: MediaConnection) {
+    const indexStream = state.streams.findIndex(conn => conn.peer === stream.peer);
+    if (indexStream < 0)
+      state.streams.push(stream);
+    else state.streams[indexStream] = stream;
   },
   setChatState(state: State, status: boolean) {
     state.chatState = status;
@@ -138,6 +154,9 @@ const actions = {
     const newConn = state.peerInstance.call(uid, fakeStream);
     commit("setMyStream", fakeStream);
     commit("addCall", newConn);
+    newConn.on('stream', function(remoteStream) {
+      commit("addStream", remoteStream);
+    });
     return newConn;
   },
   screenStreamAction: async (
@@ -153,7 +172,12 @@ const actions = {
       });
       commit("setMyStream", captureScreenStream);
       if (state.calls.length) {
-        state.calls.forEach((channel) => channel.answer(captureScreenStream));
+        state.calls.forEach((channel) => {
+          channel.answer(captureScreenStream);
+          channel.on('stream', function(remoteStream) {
+            commit("addStream", remoteStream);
+          });
+        });
       }
       return true;
     } catch (error) {
@@ -167,7 +191,12 @@ const actions = {
   ) => {
     try {
       if (state.calls.length) {
-        state.calls.forEach((channel) => channel.answer(state.myStream));
+        state.calls.forEach((channel) => {
+          channel.answer(state.myStream);
+          channel.on('stream', function(remoteStream) {
+            commit("addStream", remoteStream);
+          });
+        });
       }
       return true;
     } catch (error) {
@@ -211,7 +240,12 @@ const actions = {
       });
       commit("setMyStream", captureCamStream);
       if (state.calls.length) {
-        state.calls.forEach((channel) => channel.answer(captureCamStream));
+        state.calls.forEach((channel) => {
+          channel.answer(captureCamStream);
+          channel.on('stream', function(remoteStream) {
+            commit("addStream", remoteStream);
+          });
+        });
       }
       return true;
     } catch (error) {
